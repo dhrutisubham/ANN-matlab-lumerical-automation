@@ -15,7 +15,7 @@ end
 % firstColumn = matrixData(:, 1);
 
 % Append the first column to the combined data matrix
-combinedData = [matrixData, firstColumn]
+combinedData = [matrixData, firstColumn];
 
 % Write the combined data matrix to the destination file
 writematrix(combinedData, destinationFilePath, 'Delimiter', '\t');

@@ -1,4 +1,4 @@
-function prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res, inputFilePath, layerNumber, neuronNumber, flag, data_size)
+function prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res, inputFilePath, layerNumber, neuronNumber, flag, data_size, weightLUT, xLUT)
     
     % basic setup(demo run)
     % prevLayerNeurons=4;
@@ -15,14 +15,17 @@ function prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res,
 
     if flag==1
         data_matrix=data_matrix';
-        [vLow, vUpper]=weight_calculation_try(prevLayerNeurons, Vpi, data_matrix);
+        [vUpper, vLow]=weight_calculation_try(data_matrix, weightLUT);
+        % data_matrix
+        % prevLayerNeurons
+        % weightLUT
     end
 
 
     if flag==0
         Voltage_layer1=zeros(data_size,prevLayerNeurons);
         for u=1:data_size
-            [xi_achieve,Voltage_xi]=find_xi(data_bit,Vpi,data_matrix(u,:));
+            [xi_achieve,Voltage_xi]=find_xi(data_matrix(u,:), xLUT);
             Voltage_layer1(u,:)=Voltage_xi;
         end
     end
@@ -32,6 +35,7 @@ function prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res,
     
     total_duration = prevLayerNeurons*time_period;
     separation_value=0;
+
 
     for r=1:2*data_size
         if mod(r, 2)==1

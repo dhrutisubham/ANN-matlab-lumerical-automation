@@ -6,7 +6,7 @@ num_repetitions=2^bit_res;
 data = readmatrix(source);
 
 % Step 2: Extract the second column
-second_column = data(:, 2);
+second_column = data(2:end, 2);
 
 num_complete_sets = floor(length(second_column) / num_repetitions);
 
@@ -25,4 +25,5 @@ elseif length(separateMatrix) < data_size
     % Pad with zeros if the matrix is smaller than data_size
     separateMatrix = [separateMatrix; zeros(data_size - length(separateMatrix), 1)];
 end
+
 end

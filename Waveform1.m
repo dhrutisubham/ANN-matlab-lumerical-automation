@@ -70,26 +70,26 @@ time_vector=time_vector+delay;
 
 % Specify the folder path where you want to save the files
 if isVoltage==1
-    folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\xi\';
+    folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\xi\';
 elseif isVoltage==2
-    folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wLow\';
+    folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wLow\';
 elseif isVoltage==3
-    folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wUpper\';
+    folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wUpper\';
 end
 
 % Save the repeated vector and corresponding time values to a text file
 data =[time_vector', repeated_vector'];
 if isVoltage==0
     if isWeight==0
-        folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\xi\';
+        folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\xi\';
         file_name = sprintf('%sdata_%d_%d_%d.txt',folder_path, layerNumber, neuronNumber, iteration);
         dlmwrite(file_name, data, 'delimiter', '\t', 'precision', 10);
     else
-        folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wLow\';
+        folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wLow\';
         file_name = sprintf('%sdata_%d_%d_%d.txt',folder_path, layerNumber, neuronNumber, iteration);
         dlmwrite(file_name, data, 'delimiter', '\t', 'precision', 10);
 
-        folder_path = 'F:\Documents\IITP\4th Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wUpper\';
+        folder_path = 'F:\Documents\IITP\4th_Year\BTP\autoTest\layer'+string(layerNumber)+'\neuron'+string(neuronNumber)+'\wUpper\';
         file_name = sprintf('%sdata_%d_%d_%d.txt',folder_path, layerNumber, neuronNumber, iteration);
         dlmwrite(file_name, data, 'delimiter', '\t', 'precision', 10);
     end

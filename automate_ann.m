@@ -1,29 +1,56 @@
 clc;
 close all;
 
+data_size=45; %define the size of your data
+
+
+% Define activation functions
+
+relu = @(x) max(0, min(x, 1));
+sigmoid = @(x) 1 ./ (1 + exp(-x));
+
+
+% Lumerical Model Properties
+Potp=0.001;
+responsivity=1;
+capacitance=1;
+prop_constant=(Potp*responsivity)/capacitance;
+
+
 Vpi=3.6;
 time_period=1e-10;
-bit_res=8;
+bit_res=10;
+data_bit=4;
+
+wLut=createWeightLUT(data_bit, Vpi);
+xLut=createXLUT(data_bit, Vpi);
 
 % Define the number of layers in the ANN without input layer
-layersCount=4;
+layersCount=5;
 
 % Number of neurons in each layer
-neuronsLayer=[4, 10, 10, 3];
+neuronsLayer=[4, 10, 10, 3, 3]; %last two are same for generating output
 
 testCount=45; %define number of test data
 
 %Generate Weight Files for each layer
-weightSource='F:\Documents\IITP\4th Year\BTP\autoTest\layerWeights'; %Folder path for Layer-wise weight matrix files 
-inputSource='F:\Documents\IITP\4th Year\BTP\autoTest\input_data.txt';
+weightSource='F:\Documents\IITP\4th_Year\BTP\autoTest\layerWeights'; %Folder path for Layer-wise weight matrix files 
+inputSource='F:\Documents\IITP\4th_Year\BTP\autoTest\input_data.txt';
 
+
+workingDirectory="F:\Documents\IITP\4th_Year\BTP\";
 interconnect_exe = '"C:/Program Files/Lumerical/v231/bin/interconnect.exe"';
-script_source = '"F:\Documents\IITP\4th Year\BTP\autoTest\automation_script.lsf"';
+script_source = 'autoTest\automation_script.lsf"';
 
+trueResultSource="F:\Documents\IITP\4th_Year\BTP\autoTest\trueOutputs";
 
-%Creating folder structure for the ANN
+trueLabels=extractResultMatrices(trueResultSource);
+
+%% 
+
+% Creating folder structure for the ANN
 % Base directory where you want to create the folders
-baseDir = "F:\Documents\IITP\4th Year\BTP\autoTest"; % Replace with your desired path
+baseDir = workingDirectory+"autoTest"; % Replace with your desired path
 
 % Loop through each layer
 for layer = 1:length(neuronsLayer)
@@ -73,78 +100,128 @@ end
 disp('Extracted weight matrix files successfully.');
 
 
+%% 
 
-for i=2:layersCount
+for i=2:layersCount-1
     %Generate Weight Files
     prevLayerNeurons=neuronsLayer(i-1);
 
     for j=1:neuronsLayer(i)
-        prac_iris_testjb(prevLayerNeurons, Vpi, time_period, bit_res, filePaths{i-1}, i, j, 1);
+        prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res, filePaths{i-1}, i, j, 1, data_size, wLut, xLut);
 
         %Combine Weight Files
-        inputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
-        outputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+        inputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
+        outputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
         filesCombiner(inputFolderPath, outputFolderPath, "w_li_combined.txt");
 
-        inputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
+        inputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\wUpper\";
         filesCombiner(inputFolderPath, outputFolderPath, "w_ui_combined.txt");
     end
 end
 
 disp('Weight files generated successfully.');
 
-inputSource="F:\Documents\IITP\4th Year\BTP\autoTest\testing_data.txt";
-prac_iris_testjb(4, Vpi, time_period, bit_res, inputSource, 2, 1, 0);
-inputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\xi\";
-outputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+
+%% 
+% Generate Biases
+% Specify the folder where bias files are located
+folderPath = workingDirectory+"autoTest\layerBias";
+
+% Get a list of all bias files in the folder
+biasFiles = dir(fullfile(folderPath, '*.csv'));
+
+% Initialize a cell array to hold biases for each layer
+biasCellArray = cell(1, length(biasFiles));
+
+% Load biases from each file
+for i = 1:length(biasFiles)
+    % Construct the full file path
+    filePath = fullfile(folderPath, biasFiles(i).name);
+    
+    % Load the biases from the file
+    biases = load(filePath);
+    
+    % Store the biases in the cell array
+    biasCellArray{i} = biases;
+end
+disp('Bias files generated successfully.');
+
+%% 
+% Input Layer Matrix
+inputSource=workingDirectory+"autoTest\testing_data.txt";
+prac_iris_testjb(neuronsLayer(1), Vpi, time_period, data_bit, bit_res, inputSource, 2, 1, 0, data_size, wLut, xLut);
+inputFolderPath=workingDirectory+"autoTest\layer"+string(2)+"\neuron"+string(1)+"\xi\";
+outputFolderPath=workingDirectory+"autoTest\layer"+string(2)+"\neuron"+string(1)+"\";
 filesCombiner(inputFolderPath, outputFolderPath, "input_data.txt");
 
-destination = "F:\Documents\IITP\4th Year\BTP\autoTest\";
+destination = workingDirectory+"autoTest\";
 copyfile(outputFolderPath+"input_data.txt", destination);
 
 
-for i=2:layersCount
-    
-    outputFilePath='F:\Documents\IITP\4th Year\BTP\autoTest\output_data.txt';
-    for j=1:neuronsLayer(i)
-        %setup weight input files
-        weightLowSource="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
-        copyFileOutput(weightLowSource, "F:\Documents\IITP\4th Year\BTP\autoTest\", "w_low.txt", i, 0);
+%% 
 
-        weightLowSource="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\wUpper\";
-        copyFileOutput(weightLowSource, "F:\Documents\IITP\4th Year\BTP\autoTest\", "w_upper.txt", i, 0);
-        
+for i=2:layersCount-1
+    
+    outputFilePath=workingDirectory+"autoTest\output_data.txt";
+    layerOutPath=workingDirectory+"autoTest\layer"+string(i)+'\';
+    for j=1:neuronsLayer(i)
+        % setup weight input files
+        weightLowSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_li_combined.txt";
+        copyFileOutput(weightLowSource, workingDirectory+"autoTest\", "w_low.txt", i, 0);
+
+        weightLowSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_ui_combined.txt";
+        copyFileOutput(weightLowSource, workingDirectory+"autoTest\", "w_upper.txt", i, 0);
+
 
         %run Simulation
-        system([interconnect_exe ' -run ' script_source]);
+        workingDirectory='"F:\Documents\IITP\4th_Year\BTP\';
+        system([interconnect_exe ' -run ' workingDirectory script_source]);
+        workingDirectory="F:\Documents\IITP\4th_Year\BTP\";
 
         %format Output
         removeLumericalSignatures(outputFilePath);
 
-        destination = "F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+        destination = workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
         copyfile(outputFilePath, destination);
 
 
         %Separate different data inputs
-        layerOutPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\";
-        separateMatrix=separateOutputs(outputFilePath, bit_res);
-        saveOutputFile(separateMatrix, layerOutPath, i);
+        separateMatrix=separateOutputs(outputFilePath, bit_res, neuronsLayer(i-1), data_size);
+        
+        % separateMatrix=[1 1 1 1]';
 
-        disp(i, j);
+        %convert current output to actual data result
+        separateMatrix=separateMatrix/(prop_constant*neuronsLayer(i-1));
+
+        %apply activation function
+        updData=activationFunction(separateMatrix, biasCellArray{i-1}(j), sigmoid);
+        % updData=(quantizeInputs(data_bit, updData));
+        
+
+        %save separated matrix
+        saveOutputFile(updData, layerOutPath, i, j);
+
+        disp([i, j]);
 
     end
     
     %Replace input file with current output 
-    destination="F:\Documents\IITP\4th Year\BTP\autoTest\";
-    copyFileOutput(outputFilePath, destination, "upd_testing_data.txt", i, 0);
+    destination=workingDirectory+"autoTest\";
+    copyFileOutput(layerOutPath+"output_"+string(i)+".txt", destination, "upd_testing_data.txt", i, 0);
 
-    inputSource="F:\Documents\IITP\4th Year\BTP\autoTest\upd_testing_data.txt";
-    prac_iris_testjb(neuronsLayer(i), Vpi, time_period, bit_res, inputSource, 2, 1, 0);
-    inputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\xi\";
-    outputFolderPath="F:\Documents\IITP\4th Year\BTP\autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+    disp(i);
+    currentOutputLabels=readmatrix(layerOutPath+"output_"+string(i)+".txt");
+    
+    determineAccuracy(cell2mat(trueLabels(i-1)), currentOutputLabels);
+
+    inputSource=workingDirectory+"autoTest\upd_testing_data.txt";
+    prac_iris_testjb(neuronsLayer(i), Vpi, time_period, data_bit, bit_res, inputSource, i+1, 1, 0, data_size, wLut, xLut);
+    inputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\xi\";
+
+    outputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\";
     filesCombiner(inputFolderPath, outputFolderPath, "input_data.txt");
     
-    destination = "F:\Documents\IITP\4th Year\BTP\autoTest\";
+    destination = workingDirectory+"autoTest\";
     copyfile(outputFolderPath+"input_data.txt", destination);
 
 end
