@@ -23,4 +23,6 @@ end
 xi_achieve=reshape(xi_achieve,m,n);
 Voltage_xi=reshape( Voltage_xi,m,n);
 
+xi_achieve-target_xi;
+
 end

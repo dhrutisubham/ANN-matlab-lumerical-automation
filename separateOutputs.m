@@ -1,29 +1,56 @@
-function [separateMatrix]=separateOutputs(source, bit_res, featuresCount, data_size)
+function [finalMatrix]=separateOutputs(source, sampleRate, featuresCount, data_size)
 
-num_repetitions=2^bit_res;
 
 % Step 1: Load the data from the file
 data = readmatrix(source);
 
 % Step 2: Extract the second column
-second_column = data(2:end, 2);
+second_column = data(:, 2);
 
-num_complete_sets = floor(length(second_column) / num_repetitions);
+length(second_column);
 
-% Average
-separateMatrix = arrayfun(@(i) mean(second_column((i-1)*num_repetitions + (1:num_repetitions))), 1:num_complete_sets)';
-
-%Sum
-separateMatrix = arrayfun(@(i) sum(second_column((i-1)*featuresCount + (1:featuresCount))), 1:num_complete_sets)';
-
-separateMatrix = separateMatrix(1:2:end, :);
-
-if length(separateMatrix) > data_size
+if length(second_column) > data_size*sampleRate*featuresCount*2
     % Truncate if the matrix is larger than data_size
-    separateMatrix = separateMatrix(1:data_size);
-elseif length(separateMatrix) < data_size
+    second_column = second_column(1:data_size*sampleRate*featuresCount*2);
+elseif length(second_column) < data_size*sampleRate*featuresCount*2
     % Pad with zeros if the matrix is smaller than data_size
-    separateMatrix = [separateMatrix; zeros(data_size - length(separateMatrix), 1)];
+    second_column = [second_column; zeros(data_size*sampleRate*featuresCount*2 - length(second_column), 1)];
 end
+
+
+length(second_column);
+
+
+num_complete_sets = floor(length(second_column) / sampleRate);
+second_column=second_column';
+separateMatrix=[];
+% Average
+for i=1:num_complete_sets
+    sum=0;
+    for j=(i-1)*sampleRate+1:i*sampleRate
+        sum=sum+second_column(j);
+    end
+    sum=sum/sampleRate;
+    separateMatrix=[separateMatrix, sum];
+end
+
+num_complete_sets=num_complete_sets/featuresCount;
+finalMatrix=[];
+%Sum
+for i=1:num_complete_sets
+    sum=0;
+    for j=(i-1)*featuresCount+1:i*featuresCount
+        sum=sum+separateMatrix(j);
+    end
+    finalMatrix=[finalMatrix, sum];
+end
+
+finalMatrix=finalMatrix';
+finalMatrix = finalMatrix(1:2:end, :);
+
+% separateMatrix;
+
+
+length(finalMatrix);
 
 end

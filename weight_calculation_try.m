@@ -4,7 +4,7 @@ function[Voltage_vup_1,Voltage_vlow_1]=weight_calculation_try(target_wi, Lut_tab
 % will get the answer
 %   inputMatrix=[-0.8,0.2;0.9,0.3;0.1,0.6];
 
-
+Lut_table;
 weight_1=target_wi;
 [m,n]=size(weight_1);
 k=length(weight_1);

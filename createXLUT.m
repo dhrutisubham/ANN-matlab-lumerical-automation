@@ -1,5 +1,5 @@
 function [Lut_table]=createXLUT(n, Vpi)
-
+Vpi=Vpi/2;
 
 %  n=6;
 %  Vpi=3.6;
@@ -23,5 +23,6 @@ for t=1:1:(2^n)
     Lut_table(t,1)=xi(t);
     Lut_table(t,2)=Xi_voltage(t);
 end
+Lut_table;
 
 end

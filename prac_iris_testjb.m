@@ -34,7 +34,7 @@ function prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res,
     % data_size=3;
     
     total_duration = prevLayerNeurons*time_period;
-    separation_value=0;
+    separation_value=Vpi/2;
 
 
     for r=1:2*data_size

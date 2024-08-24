@@ -1,4 +1,5 @@
 function [Lut_table]=createWeightLUT(n, Vpi)
+Vpi=Vpi/2;
 
 V2=linspace(0,Vpi,2^n);
 %  V3=linspace(0,Vpi/2,2^n);

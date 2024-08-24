@@ -19,8 +19,10 @@ prop_constant=(Potp*responsivity)/capacitance;
 
 Vpi=3.6;
 time_period=1e-10;
-bit_res=10;
+bit_res=8;
 data_bit=4;
+SAMPLE_RATE=1.024e+13; %CHECK LUMERICAL MODEL PROPERTIES
+samplesPerPeriod=time_period*SAMPLE_RATE;
 
 wLut=createWeightLUT(data_bit, Vpi);
 xLut=createXLUT(data_bit, Vpi);
@@ -169,8 +171,8 @@ for i=2:layersCount-1
         weightLowSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_li_combined.txt";
         copyFileOutput(weightLowSource, workingDirectory+"autoTest\", "w_low.txt", i, 0);
 
-        weightLowSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_ui_combined.txt";
-        copyFileOutput(weightLowSource, workingDirectory+"autoTest\", "w_upper.txt", i, 0);
+        weightUpperSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_ui_combined.txt";
+        copyFileOutput(weightUpperSource, workingDirectory+"autoTest\", "w_upper.txt", i, 0);
 
 
         %run Simulation
@@ -186,15 +188,17 @@ for i=2:layersCount-1
 
 
         %Separate different data inputs
-        separateMatrix=separateOutputs(outputFilePath, bit_res, neuronsLayer(i-1), data_size);
+        separateMatrix=separateOutputs(outputFilePath, samplesPerPeriod, neuronsLayer(i-1), data_size);
         
         % separateMatrix=[1 1 1 1]';
 
         %convert current output to actual data result
-        separateMatrix=separateMatrix/(prop_constant*neuronsLayer(i-1));
+        % separateMatrix=separateMatrix/(prop_constant*neuronsLayer(i-1));
+        separateMatrix=2000*separateMatrix; %REPLACE 2000 BY ACTUAL NORMALISATION FACTOR
 
         %apply activation function
         updData=activationFunction(separateMatrix, biasCellArray{i-1}(j), sigmoid);
+
         % updData=(quantizeInputs(data_bit, updData));
         
 
