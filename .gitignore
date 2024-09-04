@@ -1,3 +1,5 @@
 layer*/
+!layerBias/
+!layerWeights/
 QAT_data/
 *.ich
