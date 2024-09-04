@@ -3,9 +3,11 @@ close all;
 
 data_size=45; %define the size of your data
 
+data_bit=6; % IMPORTANT TO SET BEFORE RUNNING SIMULATION 
+
+
 
 % Define activation functions
-
 relu = @(x) max(0, min(x, 1));
 sigmoid = @(x) 1 ./ (1 + exp(-x));
 
@@ -16,35 +18,44 @@ responsivity=1;
 capacitance=1;
 prop_constant=(Potp*responsivity)/capacitance;
 
-
 Vpi=3.6;
 time_period=1e-10;
 bit_res=8;
-data_bit=4;
-SAMPLE_RATE=1.024e+13; %CHECK LUMERICAL MODEL PROPERTIES
+
+SAMPLE_RATE=1.28e+12; % CHECK LUMERICAL MODEL PROPERTIES
 samplesPerPeriod=time_period*SAMPLE_RATE;
 
+
+% DATA EXTRACTION SETTINGS
+delayExtraction=time_period; % DETERMINED BY RUNNING SAMPLE DATA
+startSample=17;
+samplesCount=90;
+
+
+%CREATE LUTs
 wLut=createWeightLUT(data_bit, Vpi);
 xLut=createXLUT(data_bit, Vpi);
+% activationMap=generateMappingArray(data_bit);
+
 
 % Define the number of layers in the ANN without input layer
-layersCount=5;
+layersCount=6;
 
 % Number of neurons in each layer
-neuronsLayer=[4, 10, 10, 3, 3]; %last two are same for generating output
+neuronsLayer=[4, 8, 8, 8, 3, 3]; %last two are same for generating output
 
 testCount=45; %define number of test data
 
 %Generate Weight Files for each layer
-weightSource='F:\Documents\IITP\4th_Year\BTP\autoTest\layerWeights'; %Folder path for Layer-wise weight matrix files 
-inputSource='F:\Documents\IITP\4th_Year\BTP\autoTest\input_data.txt';
+weightSource='H:\Dhrutisundar_2101EE26\autoTest\layerWeights'; %Folder path for Layer-wise weight matrix files 
+inputSource='H:\Dhrutisundar_2101EE26\autoTest\input_data.txt';
 
 
-workingDirectory="F:\Documents\IITP\4th_Year\BTP\";
+workingDirectory="H:\Dhrutisundar_2101EE26\";
 interconnect_exe = '"C:/Program Files/Lumerical/v231/bin/interconnect.exe"';
 script_source = 'autoTest\automation_script.lsf"';
 
-trueResultSource="F:\Documents\IITP\4th_Year\BTP\autoTest\trueOutputs";
+trueResultSource="H:\Dhrutisundar_2101EE26\autoTest\trueOutputs";
 
 trueLabels=extractResultMatrices(trueResultSource);
 
@@ -85,7 +96,7 @@ disp('Folder structure created successfully.');
 
 
 
-%Extracting the weight files
+%Extracting the weight files        
 % Get a list of all files in the folder
 fileList = dir(fullfile(weightSource, '*')); % Use '*' to match all files
 
@@ -142,7 +153,7 @@ for i = 1:length(biasFiles)
     
     % Load the biases from the file
     biases = load(filePath);
-    
+
     % Store the biases in the cell array
     biasCellArray{i} = biases;
 end
@@ -176,9 +187,9 @@ for i=2:layersCount-1
 
 
         %run Simulation
-        workingDirectory='"F:\Documents\IITP\4th_Year\BTP\';
+        workingDirectory='"H:\Dhrutisundar_2101EE26\';
         system([interconnect_exe ' -run ' workingDirectory script_source]);
-        workingDirectory="F:\Documents\IITP\4th_Year\BTP\";
+        workingDirectory="H:\Dhrutisundar_2101EE26\";
 
         %format Output
         removeLumericalSignatures(outputFilePath);
@@ -188,20 +199,18 @@ for i=2:layersCount-1
 
 
         %Separate different data inputs
-        separateMatrix=separateOutputs(outputFilePath, samplesPerPeriod, neuronsLayer(i-1), data_size);
+        separateMatrix=separateOutputs(outputFilePath, samplesPerPeriod, neuronsLayer(i-1), data_size, startSample, samplesCount, samplesPerPeriod);
         
         % separateMatrix=[1 1 1 1]';
 
         %convert current output to actual data result
         % separateMatrix=separateMatrix/(prop_constant*neuronsLayer(i-1));
-        separateMatrix=2000*separateMatrix; %REPLACE 2000 BY ACTUAL NORMALISATION FACTOR
+        separateMatrix=1000*separateMatrix; %REPLACE 2000 BY ACTUAL NORMALISATION FACTOR
 
         %apply activation function
         updData=activationFunction(separateMatrix, biasCellArray{i-1}(j), sigmoid);
-
-        % updData=(quantizeInputs(data_bit, updData));
-        
-
+        updData=quantizeInputs(data_bit, updData); %Bit Quantised Activation Output
+       
         %save separated matrix
         saveOutputFile(updData, layerOutPath, i, j);
 
@@ -217,7 +226,7 @@ for i=2:layersCount-1
     currentOutputLabels=readmatrix(layerOutPath+"output_"+string(i)+".txt");
     
     determineAccuracy(cell2mat(trueLabels(i-1)), currentOutputLabels);
-
+    cell2mat(trueLabels(i-1))
     inputSource=workingDirectory+"autoTest\upd_testing_data.txt";
     prac_iris_testjb(neuronsLayer(i), Vpi, time_period, data_bit, bit_res, inputSource, i+1, 1, 0, data_size, wLut, xLut);
     inputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\xi\";

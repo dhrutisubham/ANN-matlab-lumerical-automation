@@ -1,12 +1,12 @@
-projectName="F:\Documents\IITP\4th_Year\BTP\Model\layer_1_iris.icp";
+projectName="H:\Dhrutisundar_2101EE26\autoTest\layer_1_iris.icp";
 load(projectName);
 
 switchtodesign;
 
-inPath="F:\Documents\IITP\4th_Year\BTP\autoTest\input_data.txt";
-wUpperPath="F:\Documents\IITP\4th_Year\BTP\autoTest\w_upper.txt";
-wLowerPath="F:\Documents\IITP\4th_Year\BTP\autoTest\w_low.txt";
-outPath="F:\Documents\IITP\4th_Year\BTP\autoTest\output_data.txt";
+inPath="H:\Dhrutisundar_2101EE26\autoTest\input_data.txt";
+wUpperPath="H:\Dhrutisundar_2101EE26\autoTest\w_upper.txt";
+wLowerPath="H:\Dhrutisundar_2101EE26\autoTest\w_low.txt";
+outPath="H:\Dhrutisundar_2101EE26\autoTest\output_data.txt";
 
 select("FROM_PWL_1");
 set("filename", inPath);

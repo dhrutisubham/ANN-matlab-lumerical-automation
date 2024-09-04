@@ -12,7 +12,7 @@ xi=zeros(1,2^n);
 
 for i=1:1:length(V)
     %       display(V(i));
-    xi(i)=cos((pi)*(V(i)/(2*Vpi))).^2;
+    xi(i)=(cos((pi)*(V(i)/(2*Vpi))))^2;
     %   display(xi(i));
     Xi_voltage(i)=V(i);
 end
