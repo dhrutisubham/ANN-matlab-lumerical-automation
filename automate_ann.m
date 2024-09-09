@@ -3,7 +3,7 @@ close all;
 
 data_size=45; %define the size of your data
 
-data_bit=6; % IMPORTANT TO SET BEFORE RUNNING SIMULATION 
+data_bit=2; % IMPORTANT TO SET BEFORE RUNNING SIMULATION 
 
 
 
@@ -28,8 +28,9 @@ samplesPerPeriod=time_period*SAMPLE_RATE;
 
 % DATA EXTRACTION SETTINGS
 delayExtraction=time_period; % DETERMINED BY RUNNING SAMPLE DATA
-startSample=17;
-samplesCount=90;
+extractPercent=0.5;
+startSample=ceil(((1-extractPercent)/2)*samplesPerPeriod);
+samplesCount=ceil(extractPercent*samplesPerPeriod);
 
 
 %CREATE LUTs
@@ -39,10 +40,10 @@ xLut=createXLUT(data_bit, Vpi);
 
 
 % Define the number of layers in the ANN without input layer
-layersCount=6;
+layersCount=5;
 
 % Number of neurons in each layer
-neuronsLayer=[4, 8, 8, 8, 3, 3]; %last two are same for generating output
+neuronsLayer=[4, 10, 10, 3, 3]; %last two are same for generating output
 
 testCount=45; %define number of test data
 
@@ -225,8 +226,7 @@ for i=2:layersCount-1
     disp(i);
     currentOutputLabels=readmatrix(layerOutPath+"output_"+string(i)+".txt");
     
-    determineAccuracy(cell2mat(trueLabels(i-1)), currentOutputLabels);
-    cell2mat(trueLabels(i-1))
+    determineAccuracy(readmatrix("H:\Dhrutisundar_2101EE26\autoTest\trueOutputs\Y_test.csv"), currentOutputLabels);
     inputSource=workingDirectory+"autoTest\upd_testing_data.txt";
     prac_iris_testjb(neuronsLayer(i), Vpi, time_period, data_bit, bit_res, inputSource, i+1, 1, 0, data_size, wLut, xLut);
     inputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\xi\";
