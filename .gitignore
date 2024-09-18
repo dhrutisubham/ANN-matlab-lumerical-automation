@@ -3,3 +3,4 @@ layer*/
 !layerWeights/
 QAT_data/
 *.ich
+env/
