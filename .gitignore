@@ -1,6 +1,7 @@
 layer*/
 !layerBias/
 !layerWeights/
-QAT_data/
+*_data/
 *.ich
 env/
+*.env
