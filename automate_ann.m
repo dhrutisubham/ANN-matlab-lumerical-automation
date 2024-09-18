@@ -3,14 +3,21 @@ close all;
 
 data_size=45; %define the size of your data
 
-data_bit=2; % IMPORTANT TO SET BEFORE RUNNING SIMULATION 
+data_bit=4; % IMPORTANT TO SET BEFORE RUNNING SIMULATION 
 
+% Number of neurons in each layer
+neuronsLayer=[4, 10, 10, 3, 3]; %last two are same for generating output
+
+% Define the number of layers in the ANN without input layer
+layersCount=length(neuronsLayer);
+
+% Extract all the environment variables
+loadEnvFile('./env/matlab/.env');
 
 
 % Define activation functions
 relu = @(x) max(0, min(x, 1));
 sigmoid = @(x) 1 ./ (1 + exp(-x));
-
 
 % Lumerical Model Properties
 Potp=0.001;
@@ -33,30 +40,22 @@ startSample=ceil(((1-extractPercent)/2)*samplesPerPeriod);
 samplesCount=ceil(extractPercent*samplesPerPeriod);
 
 
-%CREATE LUTs
+% CREATE LUTs
 wLut=createWeightLUT(data_bit, Vpi);
 xLut=createXLUT(data_bit, Vpi);
 % activationMap=generateMappingArray(data_bit);
 
+workingDirectory=getenv('WORKING_DIRECTORY');
+interconnect_exe = getenv('INTERCONNECT_EXE');
 
-% Define the number of layers in the ANN without input layer
-layersCount=5;
+lumericalEnv="./env/lumerical/.env";
 
-% Number of neurons in each layer
-neuronsLayer=[4, 10, 10, 3, 3]; %last two are same for generating output
+% Generate Weight Files for each layer
+weightSource=workingDirectory+"\layerWeights"; % Folder path for Layer-wise weight matrix files 
+inputSource=workingDirectory+"\input_data.txt";
 
-testCount=45; %define number of test data
-
-%Generate Weight Files for each layer
-weightSource='H:\Dhrutisundar_2101EE26\autoTest\layerWeights'; %Folder path for Layer-wise weight matrix files 
-inputSource='H:\Dhrutisundar_2101EE26\autoTest\input_data.txt';
-
-
-workingDirectory="H:\Dhrutisundar_2101EE26\";
-interconnect_exe = '"C:/Program Files/Lumerical/v231/bin/interconnect.exe"';
-script_source = 'autoTest\automation_script.lsf"';
-
-trueResultSource="H:\Dhrutisundar_2101EE26\autoTest\trueOutputs";
+script_source = "\automation_python.py";
+trueResultSource=workingDirectory+"\trueOutputs";
 
 trueLabels=extractResultMatrices(trueResultSource);
 
@@ -64,7 +63,7 @@ trueLabels=extractResultMatrices(trueResultSource);
 
 % Creating folder structure for the ANN
 % Base directory where you want to create the folders
-baseDir = workingDirectory+"autoTest"; % Replace with your desired path
+baseDir = workingDirectory; % Replace with your desired path
 
 % Loop through each layer
 for layer = 1:length(neuronsLayer)
@@ -124,11 +123,11 @@ for i=2:layersCount-1
         prac_iris_testjb(prevLayerNeurons, Vpi, time_period, data_bit, bit_res, filePaths{i-1}, i, j, 1, data_size, wLut, xLut);
 
         %Combine Weight Files
-        inputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
-        outputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+        inputFolderPath=workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\wLow\";
+        outputFolderPath=workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\";
         filesCombiner(inputFolderPath, outputFolderPath, "w_li_combined.txt");
 
-        inputFolderPath=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\wUpper\";
+        inputFolderPath=workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\wUpper\";
         filesCombiner(inputFolderPath, outputFolderPath, "w_ui_combined.txt");
     end
 end
@@ -139,7 +138,7 @@ disp('Weight files generated successfully.');
 %% 
 % Generate Biases
 % Specify the folder where bias files are located
-folderPath = workingDirectory+"autoTest\layerBias";
+folderPath = workingDirectory+"\layerBias";
 
 % Get a list of all bias files in the folder
 biasFiles = dir(fullfile(folderPath, '*.csv'));
@@ -162,13 +161,13 @@ disp('Bias files generated successfully.');
 
 %% 
 % Input Layer Matrix
-inputSource=workingDirectory+"autoTest\testing_data.txt";
+inputSource=workingDirectory+"\testing_data.txt";
 prac_iris_testjb(neuronsLayer(1), Vpi, time_period, data_bit, bit_res, inputSource, 2, 1, 0, data_size, wLut, xLut);
-inputFolderPath=workingDirectory+"autoTest\layer"+string(2)+"\neuron"+string(1)+"\xi\";
-outputFolderPath=workingDirectory+"autoTest\layer"+string(2)+"\neuron"+string(1)+"\";
+inputFolderPath=workingDirectory+"\layer"+string(2)+"\neuron"+string(1)+"\xi\";
+outputFolderPath=workingDirectory+"\layer"+string(2)+"\neuron"+string(1)+"\";
 filesCombiner(inputFolderPath, outputFolderPath, "input_data.txt");
 
-destination = workingDirectory+"autoTest\";
+destination = workingDirectory+"\";
 copyfile(outputFolderPath+"input_data.txt", destination);
 
 
@@ -176,26 +175,27 @@ copyfile(outputFolderPath+"input_data.txt", destination);
 
 for i=2:layersCount-1
     
-    outputFilePath=workingDirectory+"autoTest\output_data.txt";
-    layerOutPath=workingDirectory+"autoTest\layer"+string(i)+'\';
+    outputFilePath=workingDirectory+"\output_data.txt";
+    layerOutPath=workingDirectory+"\layer"+string(i)+'\';
+
+    TIME_WINDOW=data_size*neuronsLayer(i-1)*2*time_period+time_period;
+    writeEnvVar(lumericalEnv, 'TIME_WINDOW', TIME_WINDOW);
     for j=1:neuronsLayer(i)
         % setup weight input files
-        weightLowSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_li_combined.txt";
-        copyFileOutput(weightLowSource, workingDirectory+"autoTest\", "w_low.txt", i, 0);
+        weightLowSource=workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\w_li_combined.txt";
+        copyFileOutput(weightLowSource, workingDirectory+"\", "w_low.txt", i, 0);
 
-        weightUpperSource=workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\w_ui_combined.txt";
-        copyFileOutput(weightUpperSource, workingDirectory+"autoTest\", "w_upper.txt", i, 0);
+        weightUpperSource=workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\w_ui_combined.txt";
+        copyFileOutput(weightUpperSource, workingDirectory+"\", "w_upper.txt", i, 0);
 
 
         %run Simulation
-        workingDirectory='"H:\Dhrutisundar_2101EE26\';
-        system([interconnect_exe ' -run ' workingDirectory script_source]);
-        workingDirectory="H:\Dhrutisundar_2101EE26\";
+        system(char(string("py "+""""+workingDirectory+script_source+"""")));
 
         %format Output
         removeLumericalSignatures(outputFilePath);
 
-        destination = workingDirectory+"autoTest\layer"+string(i)+"\neuron"+string(j)+"\";
+        destination = workingDirectory+"\layer"+string(i)+"\neuron"+string(j)+"\";
         copyfile(outputFilePath, destination);
 
 
@@ -220,21 +220,21 @@ for i=2:layersCount-1
     end
     
     %Replace input file with current output 
-    destination=workingDirectory+"autoTest\";
+    destination=workingDirectory+"\";
     copyFileOutput(layerOutPath+"output_"+string(i)+".txt", destination, "upd_testing_data.txt", i, 0);
 
     disp(i);
     currentOutputLabels=readmatrix(layerOutPath+"output_"+string(i)+".txt");
     
-    determineAccuracy(readmatrix("H:\Dhrutisundar_2101EE26\autoTest\trueOutputs\Y_test.csv"), currentOutputLabels);
-    inputSource=workingDirectory+"autoTest\upd_testing_data.txt";
+    determineAccuracy(readmatrix(workingDirectory+"\trueOutputs\Y_test.csv"), currentOutputLabels);
+    inputSource=workingDirectory+"\upd_testing_data.txt";
     prac_iris_testjb(neuronsLayer(i), Vpi, time_period, data_bit, bit_res, inputSource, i+1, 1, 0, data_size, wLut, xLut);
-    inputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\xi\";
+    inputFolderPath=workingDirectory+"\layer"+string(i+1)+"\neuron"+string(1)+"\xi\";
 
-    outputFolderPath=workingDirectory+"autoTest\layer"+string(i+1)+"\neuron"+string(1)+"\";
+    outputFolderPath=workingDirectory+"\layer"+string(i+1)+"\neuron"+string(1)+"\";
     filesCombiner(inputFolderPath, outputFolderPath, "input_data.txt");
     
-    destination = workingDirectory+"autoTest\";
+    destination = workingDirectory+"\";
     copyfile(outputFolderPath+"input_data.txt", destination);
 
 end
